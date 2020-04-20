@@ -4,8 +4,8 @@ import "container/list"
 
 // LRUCache a cache implement lru algorithm
 type LRUCache struct {
-	// maximun capacity of elements
-	MaxCap int
+	// capacity of the cache; 0 means unlimit capacity
+	capacity uint
 
 	// doubly linked list
 	dll *list.List
@@ -21,11 +21,11 @@ type item struct {
 }
 
 // New init the cache
-func New(maxCap int) *LRUCache {
+func New(cap uint) *LRUCache {
 	return &LRUCache{
-		MaxCap: maxCap,
-		dll:    list.New(),
-		cache:  make(map[string]*list.Element),
+		capacity: cap,
+		dll:      list.New(),
+		cache:    make(map[string]*list.Element),
 	}
 }
 
@@ -47,7 +47,7 @@ func (lc *LRUCache) Add(key string, val interface{}) {
 	lc.cache[key] = ele
 
 	// delete the oldest value if current length is larger than maxcap
-	if lc.MaxCap != 0 && lc.Len() > lc.MaxCap {
+	if lc.capacity != 0 && lc.len() > int(lc.capacity) {
 		lc.removeOldest()
 	}
 }
@@ -72,8 +72,8 @@ func (lc *LRUCache) removeEle(ele *list.Element) {
 	delete(lc.cache, ele.Value.(*item).key)
 }
 
-// Len returns the number of items in the cache.
-func (lc *LRUCache) Len() int {
+// len returns the number of items in the cache.
+func (lc *LRUCache) len() int {
 	if lc.cache == nil {
 		return 0
 	}
