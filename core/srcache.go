@@ -12,9 +12,35 @@ import (
 
 // SRCache wrap the lru cache
 type SRCache struct {
-	lru chan *cache.LRUCache
+	chInfo chan *cacheInfo
+	chLRU  chan *cache.LRUCache
 }
 
+type cacheInfo struct {
+	capacity uint
+	nbytes   int64
+}
+
+// NewSRCache init srcache instance
 func NewSRCache() *SRCache {
-	return nil
+	return &SRCache{
+		chInfo: make(chan *cacheInfo),
+		chLRU:  make(chan *cache.LRUCache),
+	}
+}
+
+func (sr *SRCache) Add(key string, value []byte) {
+	// if sr.lru == nil {
+	// 	sr.lru = cache.New(10000)
+	// }
+}
+
+func (sr *SRCache) Get(key string) ([]byte, bool) {
+	var result []byte
+	var ok bool
+	select {
+	case <-sr.chInfo:
+
+	}
+	return nil, false
 }
