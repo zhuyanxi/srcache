@@ -1,7 +1,7 @@
-package srcache
+package core
 
 import (
-	"github.com/zhuyanxi/srcache/cache"
+	"github.com/zhuyanxi/sr-cache/cache"
 )
 
 // ISRCache define the srcache interface
