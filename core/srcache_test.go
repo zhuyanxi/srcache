@@ -27,7 +27,7 @@ func TestAddSRCache(t *testing.T) {
 }
 
 func BenchmarkAddSRCache(b *testing.B) {
-	count := 1000
+	count := 100000
 	cap := 500
 	sc := NewSRCache(uint(cap))
 	var wgT1 sync.WaitGroup
