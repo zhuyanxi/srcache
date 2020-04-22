@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/sr-cache/cache"
 )
 
@@ -53,8 +54,13 @@ func (sr *SRCache) do() {
 		case ca := <-sr.chAdd:
 			k = ca.key
 			v = ca.value
-			sr.info.lru.Add(k, v)
+			addFlag := sr.info.lru.Add(k, v)
 			sr.info.nbytes += int64(len(k)) + int64(len(v))
+			if addFlag {
+				logrus.Println("add ", ca.key+"---"+string(ca.value), "to the map")
+			} else {
+				logrus.Println("modify ", ca.key+"---"+string(ca.value), "in the map")
+			}
 		case sr.chGet <- sr.info.lru:
 		}
 	}
@@ -72,7 +78,18 @@ func (sr *SRCache) Get(key string) ([]byte, bool) {
 	lru := <-sr.chGet
 	v, ok := lru.Get(key)
 	if ok {
-		return v.([]byte), ok
+		logrus.Println("Get ", key+"---"+string(v), "success.")
+		return v, ok
 	}
+	logrus.Println("Get ", key, "fail.")
 	return nil, false
+}
+
+func (sr *SRCache) Len() int {
+	return sr.info.lru.Len()
+}
+
+func (sr *SRCache) Data() map[string][]byte {
+	//lrum:=sr.info.lru.
+	return nil
 }

@@ -8,7 +8,8 @@ import (
 
 func TestAddSRCache(t *testing.T) {
 	count := 10
-	sc := NewSRCache(4)
+	cap := 4
+	sc := NewSRCache(uint(cap))
 	var wgT1 sync.WaitGroup
 	for i := 0; i < count; i++ {
 		wgT1.Add(1)
@@ -18,7 +19,7 @@ func TestAddSRCache(t *testing.T) {
 		}(i)
 	}
 	wgT1.Wait()
-	if sc.info.lru.Len() != count {
+	if sc.info.lru.Len() != cap {
 		t.Errorf("test failed: want %d; current %d\n", count, 1)
 	} else {
 		t.Logf("test passed")

@@ -1,6 +1,10 @@
 package cache
 
-import "container/list"
+import (
+	"container/list"
+
+	"github.com/sirupsen/logrus"
+)
 
 // LRUCache a cache implement lru algorithm
 type LRUCache struct {
@@ -37,13 +41,15 @@ func New(cap uint) *LRUCache {
 }
 
 // Add add an item to the cache
-func (lc *LRUCache) Add(key string, val []byte) {
+// return false means the key is already exist, the add method just modify the value
+// 		  true means the key is not exist, the add method actually add the value to the cache
+func (lc *LRUCache) Add(key string, val []byte) bool {
 	// if cache hitted, move the hitted value to the front of doubly linked list
 	// and change the cache value to the new value, then return
 	if hit, ok := lc.cache[key]; ok {
 		lc.dll.MoveToFront(hit)
 		hit.Value.(*item).value = val
-		return
+		return false
 	}
 
 	// if not hit, add the new item to the front of doubly linked list
@@ -57,6 +63,7 @@ func (lc *LRUCache) Add(key string, val []byte) {
 	if lc.capacity != 0 && lc.Len() > int(lc.capacity) {
 		lc.removeOldest()
 	}
+	return true
 }
 
 // Get find the value of a given key
@@ -70,7 +77,10 @@ func (lc *LRUCache) Get(key string) (value []byte, ok bool) {
 
 func (lc *LRUCache) removeOldest() {
 	if ele := lc.dll.Back(); ele != nil {
+		k := ele.Value.(*item).key
+		v := ele.Value.(*item).value
 		lc.removeEle(ele)
+		logrus.Println("Remove oldest element: ", k+"---"+string(v))
 	}
 }
 
