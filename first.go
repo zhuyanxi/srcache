@@ -2,36 +2,31 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
+	"time"
+
+	"github.com/zhuyanxi/sr-cache/core"
 )
 
 var wg sync.WaitGroup
 
 func main() {
-	// ipRecords, _ := net.LookupIP("baidu.com")
-	// for _, ip := range ipRecords {
-	// 	fmt.Println(ip)
-	// }
-	cm := NewConMap()
-	// cm.Add("one", []byte("data one"))
+	t1 := time.Now()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		cm.Add("one", []byte("data one"))
-	}()
-	wg.Wait()
+	count := 10
+	sc := core.NewSRCache(4)
+	var wgT1 sync.WaitGroup
+	for i := 0; i < count; i++ {
+		wgT1.Add(1)
+		go func(j int) {
+			defer wgT1.Done()
+			sc.Add(strconv.Itoa(j), []byte(strconv.Itoa(j*j)))
+		}(i)
+	}
+	wgT1.Wait()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if v, ok := cm.Get("one"); ok {
-			fmt.Println(string(v))
-		} else {
-			fmt.Println("not found")
-		}
-	}()
-	wg.Wait()
-	//time.Sleep(time.Second)
-	fmt.Println("Done")
+	elapsed := time.Since(t1)
+	fmt.Println("Time: ", elapsed)
+	fmt.Println("main finished")
 }

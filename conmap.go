@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
 
 type item struct {
 	key   string
@@ -24,27 +29,42 @@ func NewConMap() *ConMap {
 }
 
 func (c *ConMap) mux() {
+	var k string
+	var v []byte
 	for {
 		select {
 		case it := <-c.chAdd:
-			k := it.key
-			v := it.value
+			k = it.key
+			v = it.value
 			c.m[k] = &item{
 				key:   k,
 				value: v,
 			}
-			fmt.Println("add ", it, "to the map")
+			logrus.Println("add ", it.key+"---"+string(it.value), "to the map")
+			// fmt.Println("add ", it.key+"---"+string(it.value), "to the map")
 		case c.chGet <- c.m:
+			fmt.Println("get ", k+"-"+string(v), "of the map")
 		}
 	}
 }
 
 func (c *ConMap) Add(key string, value []byte) {
+	time.Sleep(time.Millisecond)
 	it := &item{
 		key:   key,
 		value: value,
 	}
 	c.chAdd <- it
+}
+
+func (c *ConMap) AddSync(key string, value []byte) {
+	time.Sleep(time.Millisecond)
+	it := &item{
+		key:   key,
+		value: value,
+	}
+	c.m[key] = it
+	fmt.Println("add ", it.key+"---"+string(it.value), "to the map")
 }
 
 func (c *ConMap) Get(key string) ([]byte, bool) {
@@ -56,6 +76,6 @@ func (c *ConMap) Get(key string) ([]byte, bool) {
 	return nil, false
 }
 
-func (c *ConMap) Test() {
-	fmt.Println("test")
+func (c *ConMap) Len() int {
+	return len(c.m)
 }

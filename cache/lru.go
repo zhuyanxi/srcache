@@ -7,6 +7,12 @@ type LRUCache struct {
 	// capacity of the cache; 0 means unlimit capacity
 	capacity uint
 
+	// max memory of bytes occupy; 0 means unlimit
+	// maxBytes int64
+
+	// current memory occupy
+	// nbytes int64
+
 	// doubly linked list
 	dll *list.List
 
@@ -17,20 +23,21 @@ type LRUCache struct {
 // item the data structure stored in doubly linked list
 type item struct {
 	key   string
-	value interface{}
+	value []byte
 }
 
 // New init the cache
 func New(cap uint) *LRUCache {
 	return &LRUCache{
 		capacity: cap,
-		dll:      list.New(),
-		cache:    make(map[string]*list.Element),
+		// maxBytes: maxBytes,
+		dll:   list.New(),
+		cache: make(map[string]*list.Element),
 	}
 }
 
 // Add add an item to the cache
-func (lc *LRUCache) Add(key string, val interface{}) {
+func (lc *LRUCache) Add(key string, val []byte) {
 	// if cache hitted, move the hitted value to the front of doubly linked list
 	// and change the cache value to the new value, then return
 	if hit, ok := lc.cache[key]; ok {
@@ -47,13 +54,13 @@ func (lc *LRUCache) Add(key string, val interface{}) {
 	lc.cache[key] = ele
 
 	// delete the oldest value if current length is larger than maxcap
-	if lc.capacity != 0 && lc.len() > int(lc.capacity) {
+	if lc.capacity != 0 && lc.Len() > int(lc.capacity) {
 		lc.removeOldest()
 	}
 }
 
 // Get find the value of a given key
-func (lc *LRUCache) Get(key string) (value interface{}, ok bool) {
+func (lc *LRUCache) Get(key string) (value []byte, ok bool) {
 	if hit, o := lc.cache[key]; o {
 		lc.dll.MoveToFront(hit)
 		return hit.Value.(*item).value, o
@@ -72,8 +79,8 @@ func (lc *LRUCache) removeEle(ele *list.Element) {
 	delete(lc.cache, ele.Value.(*item).key)
 }
 
-// len returns the number of items in the cache.
-func (lc *LRUCache) len() int {
+// Len returns the number of items in the cache.
+func (lc *LRUCache) Len() int {
 	if lc.cache == nil {
 		return 0
 	}
