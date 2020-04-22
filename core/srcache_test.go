@@ -25,3 +25,20 @@ func TestAddSRCache(t *testing.T) {
 		t.Logf("test passed")
 	}
 }
+
+func BenchmarkAddSRCache(b *testing.B) {
+	count := 1000
+	cap := 500
+	sc := NewSRCache(uint(cap))
+	var wgT1 sync.WaitGroup
+	for i := 0; i < b.N; i++ {
+		for i := 0; i < count; i++ {
+			wgT1.Add(1)
+			go func(j int) {
+				defer wgT1.Done()
+				sc.Add(strconv.Itoa(j), []byte(strconv.Itoa(j*j)))
+			}(i)
+		}
+		wgT1.Wait()
+	}
+}
