@@ -1,4 +1,4 @@
-package core
+package srcache
 
 import (
 	"strconv"

@@ -1,8 +1,8 @@
-package core
+package srcache
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/zhuyanxi/sr-cache/cache"
+	"github.com/zhuyanxi/srcache/cache"
 )
 
 // ISRCache define the srcache interface
@@ -66,6 +66,7 @@ func (sr *SRCache) do() {
 	}
 }
 
+// Add :
 func (sr *SRCache) Add(key string, value []byte) {
 	it := &item{
 		key:   key,
@@ -74,6 +75,7 @@ func (sr *SRCache) Add(key string, value []byte) {
 	sr.chAdd <- it
 }
 
+// Get :
 func (sr *SRCache) Get(key string) ([]byte, bool) {
 	lru := <-sr.chGet
 	v, ok := lru.Get(key)
@@ -85,10 +87,12 @@ func (sr *SRCache) Get(key string) ([]byte, bool) {
 	return nil, false
 }
 
+// Len :
 func (sr *SRCache) Len() int {
 	return sr.info.lru.Len()
 }
 
+// Data : 
 func (sr *SRCache) Data() map[string][]byte {
 	//lrum:=sr.info.lru.
 	return nil
