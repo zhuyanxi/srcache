@@ -22,11 +22,11 @@ type Server struct {
 type callbackFunc func(key string) ([]byte, error)
 
 // NewServer :
-func NewServer(localURL string, callback callbackFunc) *Server {
+func NewServer(localURL string, cacheCapacity uint, callback callbackFunc) *Server {
 	return &Server{
 		localURL:   localURL,
 		pathPrefix: defaultPathPrefix,
-		cache:      NewSRCache(uint(8)),
+		cache:      NewSRCache(uint(cacheCapacity)),
 		callback:   callback,
 	}
 }

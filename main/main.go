@@ -44,7 +44,7 @@ func main() {
 	// fmt.Println("main finished")
 
 	addr := "localhost:9099"
-	peers := srcache.NewServer(addr, func(key string) ([]byte, error) {
+	peers := srcache.NewServer(addr, 100, func(key string) ([]byte, error) {
 		if v, ok := data[key]; ok {
 			logrus.Infof("query key '%s' from db.\n", key)
 			b, _ := json.Marshal(v)
