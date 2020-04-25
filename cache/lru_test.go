@@ -21,12 +21,12 @@ func TestGetAndRemoveOldest(t *testing.T) {
 
 	for _, test := range getTests {
 		// if len > capacity, the cache will remove the oldest automatically
-		lru.Add(test.keyToAdd, 1234)
+		lru.Add(test.keyToAdd, []byte("1234"))
 
 		val, ok := lru.Get(test.keyToGet)
 		if ok != test.expectedOk {
 			t.Fatalf("%s: cache hit = %v; want %v\n", test.name, ok, !ok)
-		} else if ok && val != 1234 {
+		} else if ok && string(val) != "1234" {
 			t.Fatalf("%s expected get to return 1234 but got %v\n", test.name, val)
 		}
 	}

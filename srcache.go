@@ -92,7 +92,7 @@ func (sr *SRCache) Len() int {
 	return sr.info.lru.Len()
 }
 
-// Data : 
+// Data :
 func (sr *SRCache) Data() map[string][]byte {
 	//lrum:=sr.info.lru.
 	return nil

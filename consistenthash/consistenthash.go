@@ -7,12 +7,17 @@ import (
 	"strconv"
 )
 
-type hashFn func(data []byte) uint32
+var defaultHashFunc = crc32.ChecksumIEEE
+
+// HashFunc :
+type HashFunc func(data []byte) int
 
 // ConsistentHash :
 type ConsistentHash struct {
-	hash hashFn
+	// the hash function which computes the ring key
+	hash HashFunc
 
+	// virtual node numbers = number of node * replicate
 	replicate int
 
 	// the sorted keys is used for better performance
@@ -23,14 +28,19 @@ type ConsistentHash struct {
 }
 
 // NewConsistentHash :
-func NewConsistentHash(replicate int, fn hashFn) *ConsistentHash {
+func NewConsistentHash(replicate int, fn HashFunc) *ConsistentHash {
 	ch := new(ConsistentHash)
 	ch.replicate = replicate
+
 	if fn == nil {
-		ch.hash = crc32.ChecksumIEEE
+		ch.hash = func(data []byte) int {
+			return int(defaultHashFunc(data))
+		}
 	} else {
 		ch.hash = fn
 	}
+
+	ch.ring = make(map[int]Node)
 
 	return ch
 }
@@ -40,7 +50,8 @@ func (ch *ConsistentHash) Add(nodes ...Node) {
 	for _, node := range nodes {
 		for i := 0; i < ch.replicate; i++ {
 			nodeJSON, _ := json.Marshal(node)
-			hash := int(ch.hash([]byte(string(nodeJSON) + strconv.Itoa(i))))
+			tt := strconv.Itoa(i) + string(nodeJSON)
+			hash := ch.hash([]byte(tt))
 			ch.ring[hash] = node
 			ch.sortedKeys = append(ch.sortedKeys, hash)
 		}
@@ -63,5 +74,5 @@ func (ch *ConsistentHash) Get(key string) Node {
 
 // Node :
 type Node struct {
-	IP string
+	Addr string
 }

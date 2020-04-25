@@ -44,15 +44,23 @@ func main() {
 	// fmt.Println("main finished")
 
 	addr := "localhost:9099"
-	peers := srcache.NewServer(addr, 100, func(key string) ([]byte, error) {
+	srServer := srcache.NewServer(func(key string) ([]byte, error) {
 		if v, ok := data[key]; ok {
 			logrus.Infof("query key '%s' from db.\n", key)
 			b, _ := json.Marshal(v)
 			return b, nil
 		}
 		return nil, fmt.Errorf("key '%s' not exist", key)
-	})
+	}, nil, nil)
+
+	peers := []srcache.Peers{
+		{Addr: "10.192.168.10"},
+		{Addr: "10.192.168.11"},
+		{Addr: "10.192.168.12"},
+	}
+
+	srServer.SetPeers(peers...)
 
 	logrus.Infoln("server is running at: ", addr)
-	logrus.Fatalln(http.ListenAndServe(addr, peers))
+	logrus.Fatalln(http.ListenAndServe(addr, srServer))
 }
