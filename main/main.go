@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/srcache"
+	"github.com/zhuyanxi/srcache/consistenthash"
 )
 
 func main() {
@@ -53,7 +54,7 @@ func main() {
 		return nil, fmt.Errorf("key '%s' not exist", key)
 	}, nil, nil)
 
-	peers := []srcache.Peers{
+	peers := []consistenthash.Node{
 		{Addr: "10.192.168.10"},
 		{Addr: "10.192.168.11"},
 		{Addr: "10.192.168.12"},
