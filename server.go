@@ -1,15 +1,19 @@
 package srcache
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/srcache/consistenthash"
 )
 
 const defaultLocalURL = "localhost:9099"
 const defaultPathPrefix = "/_srcache/"
-const defaultReplicate = 50
+const defaultReplicate = 3
 const defaultCapacity = 10000
 
 // Server :
@@ -72,8 +76,13 @@ func NewServer(callback callbackFunc, hashFunc consistenthash.HashFunc, opts *Se
 // SetPeers :
 func (s *Server) SetPeers(peers ...consistenthash.Node) {
 	s.peers = consistenthash.NewConsistentHash(s.opts.replicate, s.hashFunc)
-	// s.peers.Add()
 	s.peers.Add(peers...)
+}
+
+// GetPeer :
+func (s *Server) GetPeer(key string) consistenthash.Node {
+	peer := s.peers.Get(key)
+	return peer
 }
 
 // Serve :
@@ -93,6 +102,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	key := r.URL.Path[len(s.opts.pathPrefix):]
 
+	peer := s.GetPeer(key)
+	logrus.Infof("LocalAddr: %s. Query from server %s: .\n", s.opts.localURL, peer.Addr)
+	if peer.Addr == s.opts.localURL {
+		dataFromPeer, errPeer := s.getFromPeer(key)
+		if errPeer == nil {
+			w.Write(dataFromPeer)
+		} else {
+			w.Write([]byte(errPeer.Error()))
+		}
+		return
+	}
+
 	//capacity := 8
 	//cache := NewSRCache(uint(capacity))
 	data, ok := s.cache.Get(key)
@@ -108,4 +129,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(err.Error()))
 		}
 	}
+}
+
+func (s *Server) getFromPeer(key string) ([]byte, error) {
+	peer := s.GetPeer(key)
+	url := fmt.Sprintf("%v/%v", url.QueryEscape(peer.Addr), url.QueryEscape(key))
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get from peer %s: %v", peer.Addr, res.Status)
+	}
+
+	resBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body from peer %s: %v", peer.Addr, res.Status)
+	}
+
+	return resBody, nil
 }

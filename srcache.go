@@ -92,8 +92,17 @@ func (sr *SRCache) Len() int {
 	return sr.info.lru.Len()
 }
 
+// func (sr *SRCache) getValue(key string) ([]byte, bool) {
+
+// }
+
+// func (sr *SRCache) getFromLocally(key string) ([]byte, bool) {
+
+// 	return nil, nil
+// }
+
 // Data :
-func (sr *SRCache) Data() map[string][]byte {
-	//lrum:=sr.info.lru.
-	return nil
-}
+// func (sr *SRCache) Data() map[string][]byte {
+// 	//lrum:=sr.info.lru.
+// 	return nil
+// }

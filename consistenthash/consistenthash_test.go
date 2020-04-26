@@ -42,8 +42,8 @@ func TestConsistentHash(t *testing.T) {
 	hash.Add(nodes...)
 
 	m := hash.ring
-	for k, v := range m {
-		logrus.Infof("k is %d, v is %s\n", k, v.Addr)
+	for _, k := range hash.sortedKeys {
+		logrus.Infof("k is %d, v is %s\n", k, m[k].Addr)
 	}
 
 	value1 := "10.192.168.10"

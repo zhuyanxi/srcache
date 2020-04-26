@@ -5,6 +5,8 @@ import (
 	"hash/crc32"
 	"sort"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 )
 
 var defaultHashFunc = crc32.ChecksumIEEE
@@ -54,6 +56,7 @@ func (ch *ConsistentHash) Add(nodes ...Node) {
 			hash := ch.hash([]byte(tt))
 			ch.ring[hash] = node
 			ch.sortedKeys = append(ch.sortedKeys, hash)
+			logrus.Infof("Add peer: virtual node key is %d, node addr is %s.\n", hash, node.Addr)
 		}
 	}
 	sort.Ints(ch.sortedKeys)

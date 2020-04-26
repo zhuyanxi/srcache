@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,12 @@ import (
 	"github.com/zhuyanxi/srcache/consistenthash"
 )
 
+var (
+	addr = flag.String("listen-address", "localhost:3001", "The address to listen on for HTTP requests.")
+)
+
 func main() {
+	flag.Parse()
 	// t1 := time.Now()
 
 	// count := 10
@@ -44,7 +50,7 @@ func main() {
 	// fmt.Println("Time: ", elapsed)
 	// fmt.Println("main finished")
 
-	addr := "localhost:9099"
+	//addr := "localhost:3001"
 	srServer := srcache.NewServer(func(key string) ([]byte, error) {
 		if v, ok := data[key]; ok {
 			logrus.Infof("query key '%s' from db.\n", key)
@@ -55,13 +61,14 @@ func main() {
 	}, nil, nil)
 
 	peers := []consistenthash.Node{
-		{Addr: "10.192.168.10"},
-		{Addr: "10.192.168.11"},
-		{Addr: "10.192.168.12"},
+		{Addr: "localhost:3001"},
+		{Addr: "localhost:3002"},
+		{Addr: "localhost:3003"},
+		// {Addr: "localhost:3004"},
 	}
 
 	srServer.SetPeers(peers...)
 
-	logrus.Infoln("server is running at: ", addr)
-	logrus.Fatalln(http.ListenAndServe(addr, srServer))
+	logrus.Infoln("server is running at: ", *addr)
+	logrus.Fatalln(http.ListenAndServe(*addr, srServer))
 }
