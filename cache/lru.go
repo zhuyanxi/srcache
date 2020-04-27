@@ -40,8 +40,8 @@ func New(cap uint) *LRUCache {
 	}
 }
 
-// Add add an item to the cache
-// return false means the key is already exist, the add method just modify the value
+// Add add an item to the cache.
+// Return false means the key is already exist, the add method just modify the value;
 // 		  true means the key is not exist, the add method actually add the value to the cache
 func (lc *LRUCache) Add(key string, val []byte) bool {
 	// if cache hitted, move the hitted value to the front of doubly linked list

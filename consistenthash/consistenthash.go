@@ -56,7 +56,7 @@ func (ch *ConsistentHash) Add(nodes ...Node) {
 			hash := ch.hash([]byte(tt))
 			ch.ring[hash] = node
 			ch.sortedKeys = append(ch.sortedKeys, hash)
-			logrus.Infof("Add peer: virtual node key is %d, node addr is %s.\n", hash, node.Addr)
+			logrus.Infof("Add peer: virtual node key is %d, node addr is %s.", hash, node.Addr)
 		}
 	}
 	sort.Ints(ch.sortedKeys)

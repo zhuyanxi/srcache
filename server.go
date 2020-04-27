@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -13,7 +12,7 @@ import (
 
 const defaultLocalURL = "localhost:9099"
 const defaultPathPrefix = "/_srcache/"
-const defaultReplicate = 3
+const defaultReplicate = 50
 const defaultCapacity = 10000
 
 // Server :
@@ -39,13 +38,13 @@ type Server struct {
 
 // ServerOptions :
 type ServerOptions struct {
-	localURL string
+	LocalURL string
 
-	cacheCapacity uint
+	CacheCapacity uint
 
-	pathPrefix string
+	PathPrefix string
 
-	replicate int
+	Replicate int
 }
 
 type callbackFunc func(key string) ([]byte, error)
@@ -56,10 +55,10 @@ func NewServer(callback callbackFunc, hashFunc consistenthash.HashFunc, opts *Se
 
 	if opts == nil {
 		defaultOpts := ServerOptions{
-			localURL:      defaultLocalURL,
-			cacheCapacity: defaultCapacity,
-			pathPrefix:    defaultPathPrefix,
-			replicate:     defaultReplicate,
+			LocalURL:      defaultLocalURL,
+			CacheCapacity: defaultCapacity,
+			PathPrefix:    defaultPathPrefix,
+			Replicate:     defaultReplicate,
 		}
 		server.opts = defaultOpts
 	} else {
@@ -68,14 +67,14 @@ func NewServer(callback callbackFunc, hashFunc consistenthash.HashFunc, opts *Se
 
 	server.callback = callback
 	server.hashFunc = hashFunc
-	server.cache = NewSRCache(uint(server.opts.cacheCapacity))
+	server.cache = NewSRCache(uint(server.opts.CacheCapacity))
 
 	return server
 }
 
 // SetPeers :
 func (s *Server) SetPeers(peers ...consistenthash.Node) {
-	s.peers = consistenthash.NewConsistentHash(s.opts.replicate, s.hashFunc)
+	s.peers = consistenthash.NewConsistentHash(s.opts.Replicate, s.hashFunc)
 	s.peers.Add(peers...)
 }
 
@@ -87,7 +86,7 @@ func (s *Server) GetPeer(key string) consistenthash.Node {
 
 // Serve :
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !strings.HasPrefix(r.URL.Path, s.opts.pathPrefix) {
+	if !strings.HasPrefix(r.URL.Path, s.opts.PathPrefix) {
 		http.Error(w, "bad request: "+"Serving unexpected path: "+r.URL.Path, http.StatusBadRequest)
 		//panic("Serving unexpected path: " + r.URL.Path)
 		return
@@ -100,16 +99,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	key := r.URL.Path[len(s.opts.pathPrefix):]
+	key := r.URL.Path[len(s.opts.PathPrefix):]
 
 	peer := s.GetPeer(key)
-	logrus.Infof("LocalAddr: %s. Query from server %s: .\n", s.opts.localURL, peer.Addr)
-	if peer.Addr == s.opts.localURL {
+	logrus.Infof("LocalAddr: %s. Query from server %s: .\n", s.opts.LocalURL, peer.Addr)
+	if peer.Addr != s.opts.LocalURL {
 		dataFromPeer, errPeer := s.getFromPeer(key)
 		if errPeer == nil {
 			w.Write(dataFromPeer)
 		} else {
-			w.Write([]byte(errPeer.Error()))
+			//w.Write([]byte(errPeer.Error()))
+			http.Error(w, "bad request: "+errPeer.Error(), http.StatusBadRequest)
 		}
 		return
 	}
@@ -133,7 +133,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getFromPeer(key string) ([]byte, error) {
 	peer := s.GetPeer(key)
-	url := fmt.Sprintf("%v/%v", url.QueryEscape(peer.Addr), url.QueryEscape(key))
+	url := fmt.Sprintf("http://%v%v%v", peer.Addr, s.opts.PathPrefix, key)
+	// url := fmt.Sprintf("%v/%v", url.QueryEscape(peer.Addr), url.QueryEscape(key))
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err

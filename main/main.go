@@ -51,6 +51,12 @@ func main() {
 	// fmt.Println("main finished")
 
 	//addr := "localhost:3001"
+	opts := &srcache.ServerOptions{
+		LocalURL:      *addr,
+		CacheCapacity: 10,
+		Replicate:     1 << 5,
+		PathPrefix:    "/_srcache/",
+	}
 	srServer := srcache.NewServer(func(key string) ([]byte, error) {
 		if v, ok := data[key]; ok {
 			logrus.Infof("query key '%s' from db.\n", key)
@@ -58,7 +64,7 @@ func main() {
 			return b, nil
 		}
 		return nil, fmt.Errorf("key '%s' not exist", key)
-	}, nil, nil)
+	}, nil, opts)
 
 	peers := []consistenthash.Node{
 		{Addr: "localhost:3001"},
