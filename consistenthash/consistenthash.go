@@ -65,6 +65,8 @@ func (ch *ConsistentHash) Add(nodes ...Node) {
 // Get :
 func (ch *ConsistentHash) Get(key string) Node {
 	hash := int(ch.hash([]byte(key)))
+	logrus.Infof("Searched key hash is: %d.", hash)
+
 	lenK := len(ch.sortedKeys)
 
 	// return the index of first item that >= val, using binary search algorithm

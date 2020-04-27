@@ -84,7 +84,7 @@ func (s *Server) GetPeer(key string) consistenthash.Node {
 	return peer
 }
 
-// Serve :
+// Serve : server/_srcache/key
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, s.opts.PathPrefix) {
 		http.Error(w, "bad request: "+"Serving unexpected path: "+r.URL.Path, http.StatusBadRequest)
@@ -108,14 +108,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if errPeer == nil {
 			w.Write(dataFromPeer)
 		} else {
-			//w.Write([]byte(errPeer.Error()))
 			http.Error(w, "bad request: "+errPeer.Error(), http.StatusBadRequest)
 		}
 		return
 	}
 
-	//capacity := 8
-	//cache := NewSRCache(uint(capacity))
 	data, ok := s.cache.Get(key)
 	if ok {
 		w.Write(data)
