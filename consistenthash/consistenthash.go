@@ -70,9 +70,12 @@ func (ch *ConsistentHash) Get(key string) Node {
 	lenK := len(ch.sortedKeys)
 
 	// return the index of first item that >= val, using binary search algorithm
-	idx := sort.Search(lenK-1, func(i int) bool {
+	idx := sort.Search(lenK, func(i int) bool {
 		return ch.sortedKeys[i] >= hash
 	})
+	if idx == lenK {
+		idx = 0
+	}
 
 	return ch.ring[ch.sortedKeys[idx]]
 }
