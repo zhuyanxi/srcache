@@ -5,15 +5,55 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/srcache"
 	"github.com/zhuyanxi/srcache/consistenthash"
+	"gopkg.in/yaml.v2"
 )
 
+// Peer :
+type Peer struct {
+	Target string `yaml:"target"`
+}
+
+// ConfigYaml :
+type ConfigYaml struct {
+	CacheCapacity uint   `yaml:"cachecapacity"`
+	Replicate     int    `yaml:"replicate"`
+	PathPrefix    string `yaml:"pathprefix"`
+
+	DataReadEntry string `yaml:"datareadentry"`
+
+	Local string `yaml:"local"`
+	Peers []Peer `yaml:"peers"`
+}
+
 var (
-	addr = flag.String("listen-address", "localhost:3001", "The address to listen on for HTTP requests.")
+	//addr   = flag.String("listen-address", "localhost:3001", "The address to listen on for HTTP requests.")
+	config = flag.String("config", "config.yaml", "Config file in yaml format.")
 )
+
+var peerConfig ConfigYaml
+
+func init() {
+	f, err := os.Open(*config)
+	if err != nil {
+		logrus.Fatalf("os.Open failed with '%s'\n", err)
+	}
+	defer f.Close()
+
+	doc := yaml.NewDecoder(f)
+
+	//var yamlFile PeerYaml
+	err = doc.Decode(&peerConfig)
+	if err != nil {
+		logrus.Fatalf("doc.Decode failed with '%s'\n", err)
+	}
+
+	logrus.Infof("Decode config YAML peers:%#v\n", peerConfig)
+}
 
 func main() {
 	flag.Parse()
@@ -52,10 +92,10 @@ func main() {
 
 	//addr := "localhost:3001"
 	opts := &srcache.ServerOptions{
-		LocalURL:      *addr,
-		CacheCapacity: 10,
-		Replicate:     1 << 5,
-		PathPrefix:    "/_srcache/",
+		LocalURL:      peerConfig.Local,
+		CacheCapacity: peerConfig.CacheCapacity,
+		Replicate:     peerConfig.Replicate,
+		PathPrefix:    peerConfig.PathPrefix,
 	}
 	srServer := srcache.NewServer(func(key string) ([]byte, error) {
 		if v, ok := data[key]; ok {
@@ -66,15 +106,21 @@ func main() {
 		return nil, fmt.Errorf("key '%s' not exist", key)
 	}, nil, opts)
 
-	peers := []consistenthash.Node{
-		{Addr: "localhost:3001"},
-		{Addr: "localhost:3002"},
-		{Addr: "localhost:3003"},
-		// {Addr: "localhost:3004"},
+	// peers := []consistenthash.Node{
+	// 	{Addr: "localhost:3001"},
+	// 	{Addr: "localhost:3002"},
+	// 	{Addr: "localhost:3003"},
+	// }
+
+	var peers []consistenthash.Node
+	for _, v := range peerConfig.Peers {
+		peers = append(peers, consistenthash.Node{
+			Addr: v.Target,
+		})
 	}
 
 	srServer.SetPeers(peers...)
 
-	logrus.Infoln("server is running at: ", *addr)
-	logrus.Fatalln(http.ListenAndServe(*addr, srServer))
+	logrus.Infoln("server is running at: ", peerConfig.Local)
+	logrus.Fatalln(http.ListenAndServe(peerConfig.Local, srServer))
 }
