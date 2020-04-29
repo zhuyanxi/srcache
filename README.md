@@ -5,10 +5,13 @@ A distributed cache system
 Features:
 Basic LRU cache replacement policy.
 Data partition and peer picking according to consistent hash.
+HTTP server.
 
-Considered Todo:
+Considered Todos:
+A tool for deploying the system on docker or k8s easily.
 LRU-k cache replacement policy.
 Expiration time of cache.
-Cache hit and miss statistics.
-A tool for deploying the system on docker or k8s easily.
+Cache and Peer visit statistics.
+GRPC server.
+Prevent cache penetration, cache breakdown and cache avalanche.
 
