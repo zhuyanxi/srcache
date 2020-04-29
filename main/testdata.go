@@ -30,4 +30,8 @@ var data = map[string]ipLocation{
 		IP:          "10.192.168.10",
 		CountryCode: "OTHER",
 	},
+	"114.224.139.201": {
+		IP:          "114.224.139.201",
+		CountryCode: "CN",
+	},
 }

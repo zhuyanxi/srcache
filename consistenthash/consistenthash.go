@@ -64,7 +64,7 @@ func (ch *ConsistentHash) Add(nodes ...Node) {
 
 // Get :
 func (ch *ConsistentHash) Get(key string) Node {
-	hash := int(ch.hash([]byte(key)))
+	hash := ch.hash([]byte(key))
 	logrus.Infof("Searched key hash is: %d.", hash)
 
 	lenK := len(ch.sortedKeys)

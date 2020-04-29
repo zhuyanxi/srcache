@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/srcache"
@@ -31,13 +32,13 @@ type ConfigYaml struct {
 }
 
 var (
-	//addr   = flag.String("listen-address", "localhost:3001", "The address to listen on for HTTP requests.")
+	addr   = flag.String("listen-address", "", "The address to listen on for HTTP requests.")
 	config = flag.String("config", "config.yaml", "Config file in yaml format.")
 )
 
 var peerConfig ConfigYaml
 
-func init() {
+func initConfig() {
 	f, err := os.Open(*config)
 	if err != nil {
 		logrus.Fatalf("os.Open failed with '%s'\n", err)
@@ -57,6 +58,7 @@ func init() {
 
 func main() {
 	flag.Parse()
+	initConfig()
 	// t1 := time.Now()
 
 	// count := 10
@@ -91,13 +93,20 @@ func main() {
 	// fmt.Println("main finished")
 
 	//addr := "localhost:3001"
+
+	listenEntry := peerConfig.Local
+	if len(*addr) != 0 {
+		listenEntry = *addr
+	}
+
 	opts := &srcache.ServerOptions{
-		LocalURL:      peerConfig.Local,
+		LocalURL:      listenEntry,
 		CacheCapacity: peerConfig.CacheCapacity,
 		Replicate:     peerConfig.Replicate,
 		PathPrefix:    peerConfig.PathPrefix,
 	}
 	srServer := srcache.NewServer(func(key string) ([]byte, error) {
+		time.Sleep(200 * time.Millisecond)
 		if v, ok := data[key]; ok {
 			logrus.Infof("query key '%s' from db.\n", key)
 			b, _ := json.Marshal(v)
@@ -121,6 +130,6 @@ func main() {
 
 	srServer.SetPeers(peers...)
 
-	logrus.Infoln("server is running at: ", peerConfig.Local)
-	logrus.Fatalln(http.ListenAndServe(peerConfig.Local, srServer))
+	logrus.Infoln("server is running at: ", listenEntry)
+	logrus.Fatalln(http.ListenAndServe(listenEntry, srServer))
 }

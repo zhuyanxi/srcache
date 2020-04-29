@@ -102,7 +102,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Path[len(s.opts.PathPrefix):]
 
 	peer := s.GetPeer(key)
-	logrus.Infof("LocalAddr: %s. Query from server %s: .\n", s.opts.LocalURL, peer.Addr)
+	logrus.Infof("LocalAddr: %s. Query from server: %s .\n", s.opts.LocalURL, peer.Addr)
 	if peer.Addr != s.opts.LocalURL {
 		dataFromPeer, errPeer := s.getFromPeer(key)
 		if errPeer == nil {

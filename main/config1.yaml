@@ -1,0 +1,8 @@
+cachecapacity: 10000
+replicate: 64
+pathprefix: /_srcache/
+local: localhost:3001
+peers:
+  - target: localhost:3001
+  - target: localhost:3002
+  - target: localhost:3003
