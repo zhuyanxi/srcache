@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package grpc;
+
+message Request{
+    string key=1;
+}
+
+message Response{
+    bytes value=1;
+}
+
+service SRCache{
+    rpc Get (Request) returns (Response);
+}
