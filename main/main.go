@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -16,7 +17,8 @@ import (
 
 // Peer :
 type Peer struct {
-	Target string `yaml:"target"`
+	URL  string `yaml:"url"`
+	Port string `yaml:"port"`
 }
 
 // ConfigYaml :
@@ -29,6 +31,8 @@ type ConfigYaml struct {
 
 	Local string `yaml:"local"`
 	Peers []Peer `yaml:"peers"`
+
+	UseGRPC bool `yaml:"usegrpc"`
 }
 
 var (
@@ -124,12 +128,17 @@ func main() {
 	var peers []consistenthash.Node
 	for _, v := range peerConfig.Peers {
 		peers = append(peers, consistenthash.Node{
-			Addr: v.Target,
+			Addr: v.URL + ":" + v.Port,
 		})
 	}
 
 	srServer.SetPeers(peers...)
 
-	logrus.Infoln("server is running at: ", listenEntry)
-	logrus.Fatalln(http.ListenAndServe(listenEntry, srServer))
+	if peerConfig.UseGRPC {
+		logrus.Infoln("grpc server is running at: ", listenEntry)
+		srServer.ServeGRPC(strings.Split(peerConfig.Local, ":")[1])
+	} else {
+		logrus.Infoln("http server is running at: ", listenEntry)
+		logrus.Fatalln(http.ListenAndServe(listenEntry, srServer))
+	}
 }

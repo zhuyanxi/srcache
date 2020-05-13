@@ -29,11 +29,12 @@ func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
 		dataFromPeer, errPeer := s.getFromGrpcPeer(key)
 		if errPeer == nil {
 			// w.Write(dataFromPeer)
-			err := proto.Unmarshal(dataFromPeer, out)
-			if err != nil {
-				fmt.Println("unmarshaling error: ", err)
-				return err
-			}
+			// err := proto.Unmarshal(dataFromPeer, out)
+			// if err != nil {
+			// 	fmt.Println("unmarshaling error: ", err)
+			// 	return err
+			// }
+			out.Value = dataFromPeer
 		} else {
 			// http.Error(w, "bad request: "+errPeer.Error(), http.StatusBadRequest)
 		}
@@ -42,20 +43,22 @@ func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
 
 	data, ok := s.cache.Get(key)
 	if ok {
-		err := proto.Unmarshal(data, out)
-		if err != nil {
-			fmt.Println("unmarshaling error: ", err)
-			return err
-		}
+		// err := proto.Unmarshal(data, out)
+		// if err != nil {
+		// 	fmt.Println("unmarshaling error: ", err)
+		// 	return err
+		// }
+		out.Value = data
 	} else {
 		dataSource, err := s.callback(key)
 		if err == nil {
 			s.cache.Add(key, dataSource)
-			err := proto.Unmarshal(data, out)
-			if err != nil {
-				fmt.Println("unmarshaling error: ", err)
-				return err
-			}
+			out.Value = dataSource
+			// err := proto.Unmarshal(data, out)
+			// if err != nil {
+			// 	fmt.Println("unmarshaling error: ", err)
+			// 	return err
+			// }
 		}
 	}
 
@@ -63,28 +66,28 @@ func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
 }
 
 // ServeGRPC :
-func (s *Server) ServeGRPC() {
+func (s *Server) ServeGRPC(port string) {
 	// grpc.InitServer()
 	registerCacheService(s)
 
-	listener, err := net.Listen("tcp", ":1234")
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		fmt.Println("Listen TCP error:", err)
 	}
 
 	counter := 0
-	go func() {
-		for {
-			counter++
-			fmt.Println("RPC Server Start at port 1234--Counter:", counter)
-			conn, err := listener.Accept()
-			if err != nil {
-				fmt.Println("Accept error:", err)
-			}
-
-			rpc.ServeConn(conn)
+	// go func() {
+	for {
+		counter++
+		fmt.Println("RPC Server Start at port ", port, "--Counter:", counter)
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Accept error:", err)
 		}
-	}()
+
+		rpc.ServeConn(conn)
+	}
+	// }()
 }
 
 func (s *Server) getFromGrpcPeer(key string) ([]byte, error) {

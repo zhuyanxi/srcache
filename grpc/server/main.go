@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
 	"net/rpc"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/srcache/grpc"
 )
 
@@ -54,27 +52,27 @@ func main() {
 	}
 
 	counter := 0
-	go func() {
-		for {
-			counter++
-			fmt.Println("RPC Server Start at port 1234--Counter:", counter)
-			conn, err := listener.Accept()
-			if err != nil {
-				fmt.Println("Accept error:", err)
-			}
-
-			rpc.ServeConn(conn)
+	// go func() {
+	for {
+		counter++
+		fmt.Println("RPC Server Start at port 1234--Counter:", counter)
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Accept error:", err)
 		}
-	}()
 
-	// All URLs will be handled by this function
-	// http.HandleFunc uses the DefaultServeMux
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, world!"))
-	})
+		rpc.ServeConn(conn)
+	}
+	// }()
 
-	logrus.Infoln("HTTP Server is running at: 8080")
-	// Continue to process new requests until an error occurs
-	logrus.Fatalln(http.ListenAndServe(":8080", nil))
+	// // All URLs will be handled by this function
+	// // http.HandleFunc uses the DefaultServeMux
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	w.Write([]byte("Hello, world!"))
+	// })
+
+	// logrus.Infoln("HTTP Server is running at: 8080")
+	// // Continue to process new requests until an error occurs
+	// logrus.Fatalln(http.ListenAndServe(":8080", nil))
 
 }
