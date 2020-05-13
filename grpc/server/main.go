@@ -35,6 +35,8 @@ func main() {
 	data, err := proto.Marshal(test)
 	if err != nil {
 		fmt.Println("marshaling error: ", err)
+	} else {
+		fmt.Println(string(data))
 	}
 	newTest := &grpc.Response{}
 	err = proto.Unmarshal(data, newTest)

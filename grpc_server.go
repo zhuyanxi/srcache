@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/rpc"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 	"github.com/zhuyanxi/srcache/grpc"
 )
@@ -28,15 +27,16 @@ func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
 	if peer.Addr != s.opts.LocalURL {
 		dataFromPeer, errPeer := s.getFromGrpcPeer(key)
 		if errPeer == nil {
-			// w.Write(dataFromPeer)
 			// err := proto.Unmarshal(dataFromPeer, out)
 			// if err != nil {
 			// 	fmt.Println("unmarshaling error: ", err)
 			// 	return err
 			// }
+			logrus.Infoln("Data from peer(", peer.Addr, "):", string(dataFromPeer))
 			out.Value = dataFromPeer
 		} else {
 			// http.Error(w, "bad request: "+errPeer.Error(), http.StatusBadRequest)
+			out.Value = []byte(errPeer.Error())
 		}
 		return nil
 	}
@@ -53,8 +53,9 @@ func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
 		dataSource, err := s.callback(key)
 		if err == nil {
 			s.cache.Add(key, dataSource)
+			fmt.Println(string(dataSource))
 			out.Value = dataSource
-			// err := proto.Unmarshal(data, out)
+			// err := proto.Unmarshal(dataSource, out)
 			// if err != nil {
 			// 	fmt.Println("unmarshaling error: ", err)
 			// 	return err
@@ -83,8 +84,9 @@ func (s *Server) ServeGRPC(port string) {
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("Accept error:", err)
+			continue
 		}
-
+		fmt.Println("Accept from ", conn.RemoteAddr().String(), " success")
 		rpc.ServeConn(conn)
 	}
 	// }()
@@ -96,7 +98,9 @@ func (s *Server) getFromGrpcPeer(key string) ([]byte, error) {
 	client, err := rpc.Dial("tcp", addr)
 	if err != nil {
 		fmt.Println("dialing:", err)
+		return nil, err
 	}
+	defer client.Close()
 
 	req := &grpc.Request{
 		Key: key,
@@ -106,13 +110,17 @@ func (s *Server) getFromGrpcPeer(key string) ([]byte, error) {
 	err = client.Call(grpcCacheServiceName+".Get", req, &reply)
 	if err != nil {
 		fmt.Println(err)
-	}
-
-	data, err := proto.Marshal(&reply)
-	if err != nil {
-		fmt.Println("marshaling error: ", err)
 		return nil, err
 	}
 
-	return data, nil
+	fmt.Println("Peer (", peer.Addr, ") return value:", string(reply.Value))
+	return reply.Value, nil
+
+	// data, err := proto.Marshal(&reply)
+	// if err != nil {
+	// 	fmt.Println("marshaling error: ", err)
+	// 	return nil, err
+	// }
+	// fmt.Println("Peer (", peer.Addr, ") return marshaled proto value:", string(data))
+	// return data, nil
 }
