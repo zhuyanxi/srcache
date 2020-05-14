@@ -12,15 +12,20 @@ import (
 const grpcCacheServiceName = "srcache/grpc.CacheService"
 
 type grpcCacheServiceInterface = interface {
-	Get(request *grpc.Request, response *grpc.Response) error
+	Get(in *grpc.Request, out *grpc.Response) error
 }
 
 func registerCacheService(ics grpcCacheServiceInterface) error {
 	return rpc.RegisterName(grpcCacheServiceName, ics)
 }
 
+type grpcService struct {
+	server *Server
+}
+
 // Get :
-func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
+func (grpcs *grpcService) Get(in *grpc.Request, out *grpc.Response) error {
+	s := grpcs.server
 	key := in.Key
 	peer := s.GetPeer(key)
 	logrus.Infof("LocalAddr: %s. Query from server: %s .\n", s.opts.LocalURL, peer.Addr)
@@ -66,10 +71,59 @@ func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
 	return nil
 }
 
+// Get :
+// func (s *Server) Get(in *grpc.Request, out *grpc.Response) error {
+// 	key := in.Key
+// 	peer := s.GetPeer(key)
+// 	logrus.Infof("LocalAddr: %s. Query from server: %s .\n", s.opts.LocalURL, peer.Addr)
+// 	if peer.Addr != s.opts.LocalURL {
+// 		dataFromPeer, errPeer := s.getFromGrpcPeer(key)
+// 		if errPeer == nil {
+// 			// err := proto.Unmarshal(dataFromPeer, out)
+// 			// if err != nil {
+// 			// 	fmt.Println("unmarshaling error: ", err)
+// 			// 	return err
+// 			// }
+// 			logrus.Infoln("Data from peer(", peer.Addr, "):", string(dataFromPeer))
+// 			out.Value = dataFromPeer
+// 		} else {
+// 			// http.Error(w, "bad request: "+errPeer.Error(), http.StatusBadRequest)
+// 			out.Value = []byte(errPeer.Error())
+// 		}
+// 		return nil
+// 	}
+
+// 	data, ok := s.cache.Get(key)
+// 	if ok {
+// 		// err := proto.Unmarshal(data, out)
+// 		// if err != nil {
+// 		// 	fmt.Println("unmarshaling error: ", err)
+// 		// 	return err
+// 		// }
+// 		out.Value = data
+// 	} else {
+// 		dataSource, err := s.callback(key)
+// 		if err == nil {
+// 			s.cache.Add(key, dataSource)
+// 			fmt.Println(string(dataSource))
+// 			out.Value = dataSource
+// 			// err := proto.Unmarshal(dataSource, out)
+// 			// if err != nil {
+// 			// 	fmt.Println("unmarshaling error: ", err)
+// 			// 	return err
+// 			// }
+// 		}
+// 	}
+
+// 	return nil
+// }
+
 // ServeGRPC :
 func (s *Server) ServeGRPC(port string) {
-	// grpc.InitServer()
-	registerCacheService(s)
+	grpcs := &grpcService{
+		server: s,
+	}
+	registerCacheService(grpcs)
 
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {

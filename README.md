@@ -1,7 +1,7 @@
 # sr-cache
 A distributed cache system
 
-# 2012-04-28
+# 2020-04-28
 ## Features:
 Basic LRU cache replacement policy(LRU-1).
 Data partition and peer picking according to consistent hash.
@@ -16,3 +16,6 @@ Memory limit.
 Cache and Peer visit statistics.
 Prevent cache penetration, cache breakdown and cache avalanche.
 
+# 2020-05-14
+## Features Added:
+GRPC server
